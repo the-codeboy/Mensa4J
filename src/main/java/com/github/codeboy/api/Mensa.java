@@ -16,8 +16,8 @@ public class Mensa {
     private final String name, city, address;
     private final List<Double> coordinates;
 
-    private final HashMap<String, List<Meal>> meals = new HashMap<>();
-    private final HashMap<String, Boolean> openingTimes = new HashMap<>();
+    private HashMap<String, List<Meal>> meals = new HashMap<>();
+    private HashMap<String, Boolean> openingTimes = new HashMap<>();
 
     public Mensa(int id, String name, String city, String address, List<Double> coordinates) {
         this.id = id;
@@ -25,6 +25,13 @@ public class Mensa {
         this.city = city;
         this.address = address;
         this.coordinates = coordinates;
+    }
+
+    public void init(){
+        if(meals==null)
+            meals=new HashMap<>();
+        if(openingTimes==null)
+            openingTimes=new HashMap<>();
     }
 
 

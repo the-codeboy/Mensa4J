@@ -26,6 +26,7 @@ public class OpenMensa {
             try {
                 mensas = getCanteens(page++);
                 for (Mensa mensa : mensas) {
+                    mensa.init();
                     canteens.put(mensa.getId(), mensa);
                 }
             } catch (Exception e) {
