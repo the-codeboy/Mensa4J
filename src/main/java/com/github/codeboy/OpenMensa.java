@@ -11,6 +11,7 @@ public class OpenMensa {
 
     private static final OpenMensa mensa = new OpenMensa();
     private final HashMap<Integer, Mensa> canteens = new HashMap<>();
+    private String baseUrl = "https://openmensa.org/api/v2";
 
     private OpenMensa() {
     }
@@ -39,7 +40,7 @@ public class OpenMensa {
     private List<Mensa> getCanteens(int page) throws Exception {
         Type type = new TypeToken<List<Mensa>>() {
         }.getType();
-        return Util.getObject("https://openmensa.org/api/v2/canteens/?page=" + page, type);
+        return Util.getObject(baseUrl + "/canteens/?page=" + page, type);
     }
 
     public void reloadCanteens() {
@@ -51,7 +52,7 @@ public class OpenMensa {
         if (canteens.containsKey(id))
             return canteens.get(id);
         try {
-            return Util.getObject("https://openmensa.org/api/v2/canteens/" + id, Mensa.class);
+            return Util.getObject(baseUrl + "/canteens/" + id, Mensa.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,4 +77,11 @@ public class OpenMensa {
                 .collect(Collectors.toList());
     }
 
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 }

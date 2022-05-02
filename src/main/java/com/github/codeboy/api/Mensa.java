@@ -1,5 +1,6 @@
 package com.github.codeboy.api;
 
+import com.github.codeboy.OpenMensa;
 import com.github.codeboy.Util;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -27,11 +28,11 @@ public class Mensa {
         this.coordinates = coordinates;
     }
 
-    public void init(){
-        if(meals==null)
-            meals=new HashMap<>();
-        if(openingTimes==null)
-            openingTimes=new HashMap<>();
+    public void init() {
+        if (meals == null)
+            meals = new HashMap<>();
+        if (openingTimes == null)
+            openingTimes = new HashMap<>();
     }
 
 
@@ -51,7 +52,7 @@ public class Mensa {
         try {
             Type type = new TypeToken<List<Meal>>() {
             }.getType();
-            List<Meal> meals = Util.getObject("https://openmensa.org/api/v2/canteens/" + id + "/days/" + date + "/meals/", type);
+            List<Meal> meals = Util.getObject(OpenMensa.getInstance().getBaseUrl() + "/canteens/" + id + "/days/" + date + "/meals/", type);
             this.meals.put(date, meals);
             return meals;
         } catch (Exception e) {
