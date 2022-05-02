@@ -11,7 +11,7 @@ public class OpenMensa {
 
     private static final OpenMensa mensa = new OpenMensa();
     private final HashMap<Integer, Mensa> canteens = new HashMap<>();
-    private String baseUrl = "https://openmensa.org/api/v2";
+    private String baseUrl = "http://openmensa.org/api/v2";
 
     private OpenMensa() {
     }
