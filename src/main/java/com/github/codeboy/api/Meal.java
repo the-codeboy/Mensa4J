@@ -23,12 +23,10 @@ public class Meal {
         return prices;
     }
 
-    public Meal clone(){
-        Meal clone=new Meal();
-        clone.name=name;
-        clone.category=category;
-        clone.notes=notes;
-        clone.prices=prices;
-        return clone;
+    public Meal(String name, String category, List<String> notes, Prices prices) {
+        this.name = name;
+        this.category = category;
+        this.notes = notes;
+        this.prices = prices;
     }
 }
