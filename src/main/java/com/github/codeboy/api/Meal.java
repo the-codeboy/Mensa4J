@@ -22,4 +22,13 @@ public class Meal {
     public Prices getPrices() {
         return prices;
     }
+
+    public Meal clone(){
+        Meal clone=new Meal();
+        clone.name=name;
+        clone.category=category;
+        clone.notes=notes;
+        clone.prices=prices;
+        return clone;
+    }
 }
