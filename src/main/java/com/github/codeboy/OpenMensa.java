@@ -1,6 +1,7 @@
 package com.github.codeboy;
 
 import com.github.codeboy.api.Mensa;
+import com.github.codeboy.api.MensaImpl;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -11,7 +12,7 @@ public class OpenMensa {
 
     private static final OpenMensa mensa = new OpenMensa();
     private final HashMap<Integer, Mensa> canteens = new HashMap<>();
-    private String baseUrl = "http://openmensa.org/api/v2";
+    private String baseUrl = "https://openmensa.org/api/v2";
 
     private OpenMensa() {
     }
@@ -27,7 +28,8 @@ public class OpenMensa {
             try {
                 mensas = getCanteens(page++);
                 for (Mensa mensa : mensas) {
-                    mensa.init();
+                    if (mensa instanceof MensaImpl)
+                        ((MensaImpl) mensa).init();
                     canteens.put(mensa.getId(), mensa);
                 }
             } catch (Exception e) {
@@ -38,7 +40,7 @@ public class OpenMensa {
     }
 
     private List<Mensa> getCanteens(int page) throws Exception {
-        Type type = new TypeToken<List<Mensa>>() {
+        Type type = new TypeToken<List<MensaImpl>>() {
         }.getType();
         return Util.getObject(baseUrl + "/canteens/?page=" + page, type);
     }
@@ -52,11 +54,15 @@ public class OpenMensa {
         if (canteens.containsKey(id))
             return canteens.get(id);
         try {
-            return Util.getObject(baseUrl + "/canteens/" + id, Mensa.class);
+            return Util.getObject(baseUrl + "/canteens/" + id, MensaImpl.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void addMensa(Mensa mensa) {
+        canteens.put(mensa.getId(), mensa);
     }
 
     public Optional<Mensa> getOptionalMensa(int id) {
