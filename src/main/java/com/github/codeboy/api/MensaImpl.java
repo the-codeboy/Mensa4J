@@ -29,17 +29,10 @@ public class MensaImpl implements Mensa {
     }
 
     public void init() {
-        if (meals == null)
-            meals = new HashMap<>();
-        if (openingTimes == null)
-            openingTimes = new HashMap<>();
+        if (meals == null) meals = new HashMap<>();
+        if (openingTimes == null) openingTimes = new HashMap<>();
     }
 
-
-    @Override
-    public List<Meal> getMeals() {
-        return getMeals(new Date());
-    }
 
     @Override
     public List<Meal> getMeals(Date date) {

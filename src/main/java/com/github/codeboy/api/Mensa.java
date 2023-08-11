@@ -4,7 +4,9 @@ import java.util.Date;
 import java.util.List;
 
 public interface Mensa {
-    List<Meal> getMeals();
+    default List<Meal> getMeals() {
+        return getMeals(new Date());
+    }
 
     List<Meal> getMeals(Date date);
 

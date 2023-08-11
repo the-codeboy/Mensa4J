@@ -2,6 +2,7 @@ package com.github.codeboy;
 
 import com.github.codeboy.api.Mensa;
 import com.github.codeboy.api.MensaImpl;
+import com.github.codeboy.api.RWTHMensa;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -37,6 +38,7 @@ public class OpenMensa {
                 break;
             }
         } while (!mensas.isEmpty());
+        RWTHMensa.injectRWTHCanteens(canteens);
     }
 
     private List<Mensa> getCanteens(int page) throws Exception {
