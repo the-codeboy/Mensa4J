@@ -94,7 +94,15 @@ public class RWTHMensa implements Mensa {
                 meals.add(meal);
             }
 
-            Element extras = day.selectFirst("table.extras");// todo parse beilagen
+            Element extras = day.selectFirst("table.extras");// parse beilagen
+            Elements beilagen=extras.select("td.menue-wrapper");
+            Prices prices=new Prices(null,null,null,null);
+            for (Element beilage:beilagen){
+                String category=beilage.selectFirst("span.menue-category").text();
+                String description=beilage.selectFirst("span.menue-desc").ownText();
+                Meal meal=new Meal(description,category,Collections.emptyList(),prices);
+                meals.add(meal);
+            }
         }
     }
 
