@@ -47,6 +47,14 @@ public class RWTHMensa implements Mensa {
         }
     }
 
+    public void loadNewMeals(){
+        try {
+            loadMeals();
+        } catch (IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void loadMeals() throws IOException, ParseException {// todo refractor this method and maybe move to different class
         String url = "https://www.studierendenwerk-aachen.de/speiseplaene/" + webName + "-w.html";
         Document doc = Jsoup.connect(url).get();
@@ -113,6 +121,8 @@ public class RWTHMensa implements Mensa {
 
     @Override
     public List<Meal> getMeals(String date) {
+        if(!meals.containsKey(date))
+            loadNewMeals();
         return meals.getOrDefault(date, Collections.emptyList());
     }
 
