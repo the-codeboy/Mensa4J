@@ -5,6 +5,7 @@ import com.github.codeboy.Util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -107,9 +108,12 @@ public class RWTHMensa implements Mensa {
             Prices prices=new Prices(null,null,null,null);
             for (Element beilage:beilagen){
                 String category=beilage.selectFirst("span.menue-category").text();
-                String description=beilage.selectFirst("span.menue-desc").ownText();
-                Meal meal=new Meal(description,category,Collections.emptyList(),prices);
-                meals.add(meal);
+                for (TextNode beilagenNode:beilage.selectFirst("span.menue-desc").textNodes()){
+                    String description=beilagenNode.text();
+                    System.out.println(description);
+                    Meal meal=new Meal(description,category,Collections.emptyList(),prices);
+                    meals.add(meal);
+                }
             }
         }
     }
