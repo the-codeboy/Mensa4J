@@ -110,7 +110,6 @@ public class RWTHMensa implements Mensa {
                 String category=beilage.selectFirst("span.menue-category").text();
                 for (TextNode beilagenNode:beilage.selectFirst("span.menue-desc").textNodes()){
                     String description=beilagenNode.text();
-                    System.out.println(description);
                     Meal meal=new Meal(description,category,Collections.emptyList(),prices);
                     meals.add(meal);
                 }
