@@ -108,4 +108,9 @@ public class MensaImpl implements Mensa {
     public List<Double> getCoordinates() {
         return coordinates;
     }
+
+    @Override
+    public boolean hasOpeningHours() {
+        return false;
+    }
 }

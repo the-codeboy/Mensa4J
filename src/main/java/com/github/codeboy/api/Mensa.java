@@ -27,4 +27,24 @@ public interface Mensa {
     String getAddress();
 
     List<Double> getCoordinates();
+
+
+    /**
+     * @return true if this object provides the opening hours of the mensa
+     */
+    boolean hasOpeningHours();
+
+    /**
+     * @return the hour of day where the mensa opens - or 0 if unknown
+     */
+    default float getOpeningTime(Date date) {
+        return 0;
+    }
+
+    /**
+     * @return the hour of day where the mensa closes - or 0 if unknown
+     */
+    default float getClosingTime(Date date) {
+        return 0;
+    }
 }
