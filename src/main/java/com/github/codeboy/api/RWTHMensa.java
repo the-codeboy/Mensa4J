@@ -210,28 +210,32 @@ public class RWTHMensa implements Mensa {
         calendar.setTime(date);
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
 
-        String day = switch (dayOfWeek) {
-            case 1:
-                yield "Mo";
-            case 2:
-                yield "Di";
-            case 3:
-                yield "Mi";
-            case 4:
-                yield "Do";
-            case 5:
-                yield "Fr";
-            case 6:
-                yield "Sa";
-            case 7:
-                yield "So";
-            default:
-                throw new IllegalStateException("Unexpected value: " + dayOfWeek);
-        };
+        String day = getDayName(dayOfWeek);
         OpeningTimes openingTimes = openingTimesMap.get(day);
         if (openingTimes == null)
             return OpeningTimes.closed;
         return openingTimes;
+    }
+
+    String getDayName(int dayOfWeek) {
+        switch (dayOfWeek) {
+            case 1:
+                return "Mo";
+            case 2:
+                return "Di";
+            case 3:
+                return "Mi";
+            case 4:
+                return "Do";
+            case 5:
+                return "Fr";
+            case 6:
+                return "Sa";
+            case 7:
+                return "So";
+            default:
+                throw new IllegalStateException("Unexpected value: " + dayOfWeek);
+        }
     }
 
     @Override
