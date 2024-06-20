@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Calendar.*;
+
 public class RWTHMensa implements Mensa {
 
     public static void injectRWTHCanteens(HashMap<Integer, Mensa> canteens) {
@@ -219,20 +221,20 @@ public class RWTHMensa implements Mensa {
 
     String getDayName(int dayOfWeek) {
         switch (dayOfWeek) {
-            case 1:
-                return "Mo";
-            case 2:
-                return "Di";
-            case 3:
-                return "Mi";
-            case 4:
-                return "Do";
-            case 5:
-                return "Fr";
-            case 6:
-                return "Sa";
-            case 7:
+            case SUNDAY:
                 return "So";
+            case MONDAY:
+                return "Mo";
+            case TUESDAY:
+                return "Di";
+            case WEDNESDAY:
+                return "Mi";
+            case THURSDAY:
+                return "Do";
+            case FRIDAY:
+                return "Fr";
+            case SATURDAY:
+                return "Sa";
             default:
                 throw new IllegalStateException("Unexpected value: " + dayOfWeek);
         }
