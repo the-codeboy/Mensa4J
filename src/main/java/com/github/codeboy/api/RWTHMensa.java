@@ -33,6 +33,12 @@ public class RWTHMensa implements Mensa {
 
     public static void main(String[] args) {
         OpenMensa.getInstance().reloadCanteens();
+        for (Mensa mensa : OpenMensa.getInstance().getAllCanteens()) {
+            if (mensa instanceof RWTHMensa) {
+                System.out.println(mensa.getId());
+                System.out.println(mensa.getName());
+            }
+        }
     }
 
     private static void injectCanteen(HashMap<Integer, Mensa> canteens, int id, String webName) {
@@ -41,21 +47,23 @@ public class RWTHMensa implements Mensa {
 
     private static void injectCanteen(HashMap<Integer, Mensa> canteens, int id, String webName, String otherWebName) {
         Mensa original = canteens.get(id);
-        RWTHMensa rwthMensa = new RWTHMensa(original, webName, otherWebName);
+        RWTHMensa rwthMensa = new RWTHMensa(original, webName, otherWebName, id);
         canteens.put(id, rwthMensa);// override the original mensa
     }
 
     private final Mensa original;
     private final String webName;
     private final String otherWebname;
+    private final int id;
     private final Map<String, OpeningTimes> openingTimesMap = new HashMap<>();
 
     private HashMap<String, List<Meal>> meals = new HashMap<>();
 
-    public RWTHMensa(Mensa original, String webName, String otherWebname) {
+    public RWTHMensa(Mensa original, String webName, String otherWebname, int id) {
         this.original = original;
         this.webName = webName;
         this.otherWebname = otherWebname;
+        this.id = id;
         try {
             loadOpeningHours();
             loadMeals();
@@ -269,26 +277,39 @@ public class RWTHMensa implements Mensa {
 
     @Override
     public int getId() {
-        return original.getId();
+        return id;
     }
 
     @Override
     public String getName() {
+        if (original == null) {
+            return webName;
+        }
         return original.getName();
     }
 
     @Override
     public String getCity() {
+        if (original == null) {
+            return "Aachen";
+        }
         return original.getCity();
     }
 
     @Override
     public String getAddress() {
+        if (original == null) {
+            return "unknown";
+        }
         return original.getAddress();
     }
 
     @Override
     public List<Double> getCoordinates() {
+        if (original == null) {
+            Double[] d = {0.0,0.0};
+            return Arrays.asList(d);
+        }
         return original.getCoordinates();
     }
 
