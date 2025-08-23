@@ -16,6 +16,7 @@ public class OpenMensa {
     private String baseUrl = "https://openmensa.org/api/v2";
 
     private OpenMensa() {
+        loadCanteens();
     }
 
     public static OpenMensa getInstance() {
