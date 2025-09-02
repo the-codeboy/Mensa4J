@@ -16,7 +16,6 @@ public class OpenMensa {
     private String baseUrl = "https://openmensa.org/api/v2";
 
     private OpenMensa() {
-        loadCanteens();
     }
 
     public static OpenMensa getInstance() {
@@ -51,6 +50,10 @@ public class OpenMensa {
     public void reloadCanteens() {
         canteens.clear();
         loadCanteens();
+    }
+
+    public void reloadRWTHCanteens() {
+        RWTHMensa.injectRWTHCanteens(canteens);
     }
 
     public Mensa getMensa(int id) {
