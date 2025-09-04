@@ -215,6 +215,10 @@ public class RWTHMensa implements Mensa {
         }
     }
 
+    public void reloadMeals() throws IOException, ParseException {
+        loadMeals();
+    }
+
     private OpeningTimes getOpeningTimes(Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
