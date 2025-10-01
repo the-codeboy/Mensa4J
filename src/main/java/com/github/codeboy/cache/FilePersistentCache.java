@@ -202,6 +202,38 @@ public class FilePersistentCache implements PersistentCache {
     }
     
     @Override
+    public <T> T get(String key, java.lang.reflect.Type type) {
+        if (key == null) {
+            return null;
+        }
+        
+        CacheEntry entry = memoryCache.get(key);
+        if (entry == null) {
+            return null;
+        }
+        
+        if (entry.isExpired()) {
+            remove(key);
+            return null;
+        }
+        
+        try {
+            Object data = entry.getData();
+            if (data == null) {
+                return null;
+            }
+            
+            // For generic types, we need to use Gson to properly deserialize
+            String json = gson.toJson(data);
+            return gson.fromJson(json, type);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to deserialize cache entry for key '" + key + "' with type '" + type + "': " + e.getMessage());
+            remove(key);
+            return null;
+        }
+    }
+    
+    @Override
     public boolean contains(String key) {
         if (key == null) {
             return false;

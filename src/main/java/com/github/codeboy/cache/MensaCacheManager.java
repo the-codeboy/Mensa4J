@@ -1,7 +1,9 @@
 package com.github.codeboy.cache;
 
 import com.github.codeboy.api.Meal;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -54,23 +56,13 @@ public class MensaCacheManager {
      * @param date The date string (YYYY-MM-DD format)
      * @return The cached list of meals, or null if not found or expired
      */
-    @SuppressWarnings("unchecked")
     public List<Meal> getCachedMeals(int mensaId, String date) {
         String key = MEALS_KEY_PREFIX + mensaId + "_" + date;
         
         try {
-            // We need to use TypeToken to handle generic List<Meal> deserialization
-            Object cached = cache.get(key, Object.class);
-            if (cached == null) {
-                return null;
-            }
-            
-            // If it's already a List, return it
-            if (cached instanceof List) {
-                return (List<Meal>) cached;
-            }
-            
-            return null;
+            // Use TypeToken to properly handle generic List<Meal> deserialization
+            Type listType = new TypeToken<List<Meal>>(){}.getType();
+            return cache.get(key, listType);
         } catch (Exception e) {
             System.err.println("Warning: Failed to retrieve cached meals: " + e.getMessage());
             return null;

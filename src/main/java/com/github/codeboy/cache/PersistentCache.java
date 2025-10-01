@@ -36,6 +36,15 @@ public interface PersistentCache {
     <T> T get(String key, Class<T> clazz);
     
     /**
+     * Retrieve an object from the cache using a Type token for generic types.
+     * 
+     * @param key The key used to store the object
+     * @param type The Type token for the object (supports generics like List<Meal>)
+     * @return The cached object, or null if not found or expired
+     */
+    <T> T get(String key, java.lang.reflect.Type type);
+    
+    /**
      * Check if a cache entry exists and is not expired.
      * 
      * @param key The key to check

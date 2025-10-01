@@ -63,12 +63,6 @@ public class RWTHMensa implements Mensa {
         this.webName = webName;
         this.otherWebname = otherWebname;
         this.id = id;
-        try {
-            loadOpeningHours();
-            loadMeals();
-        } catch (IOException | ParseException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private MensaCacheManager getCacheManager(){
