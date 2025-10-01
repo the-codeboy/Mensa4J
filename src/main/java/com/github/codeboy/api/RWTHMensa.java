@@ -2,6 +2,7 @@ package com.github.codeboy.api;
 
 import com.github.codeboy.OpenMensa;
 import com.github.codeboy.Util;
+import com.github.codeboy.cache.MensaCacheManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,14 +57,14 @@ public class RWTHMensa implements Mensa {
     private final String otherWebname;
     private final int id;
     private final Map<String, OpeningTimes> openingTimesMap = new HashMap<>();
-
-    private HashMap<String, List<Meal>> meals = new HashMap<>();
+    private final MensaCacheManager cacheManager;
 
     public RWTHMensa(Mensa original, String webName, String otherWebname, int id) {
         this.original = original;
         this.webName = webName;
         this.otherWebname = otherWebname;
         this.id = id;
+        this.cacheManager = new MensaCacheManager();
         try {
             loadOpeningHours();
             loadMeals();
@@ -171,7 +172,6 @@ public class RWTHMensa implements Mensa {
         for (int i = 0; i < days.size(); i++) {
             Element day = days.get(i);
             ArrayList<Meal> meals = new ArrayList<>();
-            this.meals.put(dateStrings[i], meals);
 
             Element menues = day.selectFirst("table.menues").selectFirst("tbody");
             Elements mealHTMLs = menues.select("tr");
@@ -188,8 +188,7 @@ public class RWTHMensa implements Mensa {
 
                 String description = mealDescription.ownText();
 
-                Elements descriptionParts = mealDescription.children();
-                // todo extract the allergy stuff from this
+                // todo extract the allergy stuff from descriptionParts
                 Element mealPrice = menueWrapper.selectFirst("span.menue-price");
                 String price;
                 if (mealPrice == null)
@@ -212,6 +211,9 @@ public class RWTHMensa implements Mensa {
                     meals.add(meal);
                 }
             }
+            
+            // Cache the loaded meals using the cache manager
+            cacheManager.cacheMeals(id, dateStrings[i], meals);
         }
     }
 
@@ -269,10 +271,17 @@ public class RWTHMensa implements Mensa {
 
     @Override
     public List<Meal> getMeals(String date, boolean bypassCache) {
-        if (bypassCache || !meals.containsKey(date)) {
-            loadNewMeals();
+        if (!bypassCache) {
+            List<Meal> cachedMeals = cacheManager.getCachedMeals(id, date);
+            if (cachedMeals != null) {
+                return cachedMeals;
+            }
         }
-        return meals.getOrDefault(date, Collections.emptyList());
+        
+        loadNewMeals();
+        
+        List<Meal> freshMeals = cacheManager.getCachedMeals(id, date);
+        return freshMeals != null ? freshMeals : Collections.emptyList();
     }
 
     @Override
