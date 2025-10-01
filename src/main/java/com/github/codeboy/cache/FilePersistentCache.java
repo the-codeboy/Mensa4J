@@ -29,6 +29,7 @@ public class FilePersistentCache implements PersistentCache {
     private final Path cacheDirectory;
     private final Gson gson;
     private final Map<String, CacheEntry> memoryCache;
+    private boolean diskCache = true;
     
     /**
      * Create a new FilePersistentCache with the default cache directory.
@@ -54,7 +55,8 @@ public class FilePersistentCache implements PersistentCache {
         createCacheDirectory();
         
         // Load existing cache entries from disk
-        loadExistingCache();
+        if(diskCache)
+            loadExistingCache();
     }
     
     /**
@@ -77,7 +79,8 @@ public class FilePersistentCache implements PersistentCache {
                 Files.createDirectories(cacheDirectory);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to create cache directory: " + cacheDirectory, e);
+            System.err.println("Failed to create cache directory: " + cacheDirectory + " will only cache to ram. " + e.getMessage());
+            diskCache = false;
         }
     }
     

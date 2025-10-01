@@ -3,6 +3,7 @@ package com.github.codeboy;
 import com.github.codeboy.api.Mensa;
 import com.github.codeboy.api.MensaImpl;
 import com.github.codeboy.api.RWTHMensa;
+import com.github.codeboy.cache.MensaCacheManager;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -14,8 +15,10 @@ public class OpenMensa {
     private static final OpenMensa mensa = new OpenMensa();
     private final HashMap<Integer, Mensa> canteens = new HashMap<>();
     private String baseUrl = "https://openmensa.org/api/v2";
+    private MensaCacheManager cacheManager;
 
     private OpenMensa() {
+        cacheManager = new MensaCacheManager();
     }
 
     public static OpenMensa getInstance() {
@@ -95,5 +98,13 @@ public class OpenMensa {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public MensaCacheManager getCacheManager(){
+        return cacheManager;
+    }
+
+    public void setCacheManager(MensaCacheManager cacheManager){
+        this.cacheManager = cacheManager;
     }
 }

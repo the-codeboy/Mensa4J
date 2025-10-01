@@ -17,7 +17,6 @@ public class MensaImpl implements Mensa {
     private final String name, city, address;
     private final List<Double> coordinates;
 
-    private final MensaCacheManager cacheManager;
 
     public MensaImpl(int id, String name, String city, String address, List<Double> coordinates) {
         this.id = id;
@@ -25,11 +24,13 @@ public class MensaImpl implements Mensa {
         this.city = city;
         this.address = address;
         this.coordinates = coordinates;
-        this.cacheManager = new MensaCacheManager();
     }
 
     public void init() {
-        // Cache manager handles initialization
+    }
+
+    private MensaCacheManager getCacheManager(){
+        return OpenMensa.getInstance().getCacheManager();
     }
 
 
@@ -52,7 +53,7 @@ public class MensaImpl implements Mensa {
     public List<Meal> getMeals(String date, boolean bypassCache) {
         // Check cache if not bypassing
         if (!bypassCache) {
-            List<Meal> cachedMeals = cacheManager.getCachedMeals(id, date);
+            List<Meal> cachedMeals = getCacheManager().getCachedMeals(id, date);
             if (cachedMeals != null) {
                 return cachedMeals;
             }
@@ -65,7 +66,7 @@ public class MensaImpl implements Mensa {
             List<Meal> fetchedMeals = Util.getObject(OpenMensa.getInstance().getBaseUrl() + "/canteens/" + id + "/days/" + date + "/meals/", type);
             
             // Cache the fetched meals
-            cacheManager.cacheMeals(id, date, fetchedMeals);
+            getCacheManager().cacheMeals(id, date, fetchedMeals);
             
             return fetchedMeals;
         } catch (Exception e) {
@@ -87,7 +88,7 @@ public class MensaImpl implements Mensa {
     @Override
     public boolean isOpen(String date) {
         // Check cache
-        Boolean cachedOpeningTimes = cacheManager.getCachedOpeningTimes(id, date);
+        Boolean cachedOpeningTimes = getCacheManager().getCachedOpeningTimes(id, date);
         if (cachedOpeningTimes != null) {
             return cachedOpeningTimes;
         }
@@ -99,7 +100,7 @@ public class MensaImpl implements Mensa {
             boolean isOpen = !closed;
             
             // Cache the result
-            cacheManager.cacheOpeningTimes(id, date, isOpen);
+            getCacheManager().cacheOpeningTimes(id, date, isOpen);
             
             return isOpen;
         } catch (Exception e) {

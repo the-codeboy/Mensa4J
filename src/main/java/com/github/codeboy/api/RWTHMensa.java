@@ -57,20 +57,22 @@ public class RWTHMensa implements Mensa {
     private final String otherWebname;
     private final int id;
     private final Map<String, OpeningTimes> openingTimesMap = new HashMap<>();
-    private final MensaCacheManager cacheManager;
 
     public RWTHMensa(Mensa original, String webName, String otherWebname, int id) {
         this.original = original;
         this.webName = webName;
         this.otherWebname = otherWebname;
         this.id = id;
-        this.cacheManager = new MensaCacheManager();
         try {
             loadOpeningHours();
             loadMeals();
         } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private MensaCacheManager getCacheManager(){
+        return OpenMensa.getInstance().getCacheManager();
     }
 
     private void loadOpeningHours() throws IOException {
@@ -213,7 +215,7 @@ public class RWTHMensa implements Mensa {
             }
             
             // Cache the loaded meals using the cache manager
-            cacheManager.cacheMeals(id, dateStrings[i], meals);
+            getCacheManager().cacheMeals(id, dateStrings[i], meals);
         }
     }
 
@@ -272,7 +274,7 @@ public class RWTHMensa implements Mensa {
     @Override
     public List<Meal> getMeals(String date, boolean bypassCache) {
         if (!bypassCache) {
-            List<Meal> cachedMeals = cacheManager.getCachedMeals(id, date);
+            List<Meal> cachedMeals = getCacheManager().getCachedMeals(id, date);
             if (cachedMeals != null) {
                 return cachedMeals;
             }
@@ -280,7 +282,7 @@ public class RWTHMensa implements Mensa {
         
         loadNewMeals();
         
-        List<Meal> freshMeals = cacheManager.getCachedMeals(id, date);
+        List<Meal> freshMeals = getCacheManager().getCachedMeals(id, date);
         return freshMeals != null ? freshMeals : Collections.emptyList();
     }
 
