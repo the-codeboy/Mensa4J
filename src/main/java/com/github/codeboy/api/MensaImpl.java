@@ -40,8 +40,18 @@ public class MensaImpl implements Mensa {
     }
 
     @Override
+    public List<Meal> getMeals(Date date, boolean bypassCache) {
+        return getMeals(Util.dateToString(date), bypassCache);
+    }
+
+    @Override
     public List<Meal> getMeals(String date) {
-        if (meals.containsKey(date)) {
+        return getMeals(date, false);
+    }
+
+    @Override
+    public List<Meal> getMeals(String date, boolean bypassCache) {
+        if (!bypassCache && meals.containsKey(date)) {
             return meals.get(date);
         }
 

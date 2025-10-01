@@ -8,9 +8,21 @@ public interface Mensa {
         return getMeals(new Date());
     }
 
+    default List<Meal> getMeals(boolean bypassCache) {
+        return getMeals(new Date(), bypassCache);
+    }
+
     List<Meal> getMeals(Date date);
 
+    default List<Meal> getMeals(Date date, boolean bypassCache) {
+        return getMeals(date);
+    }
+
     List<Meal> getMeals(String date);
+
+    default List<Meal> getMeals(String date, boolean bypassCache) {
+        return getMeals(date);
+    }
 
     boolean isOpen();
 
