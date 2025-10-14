@@ -20,6 +20,52 @@ import static java.util.Calendar.*;
 
 public class RWTHMensa implements Mensa {
 
+    // Mapping of allergen codes to their full descriptions
+    private static final Map<String, String> ALLERGEN_MAP = new HashMap<>();
+    
+    static {
+        // Additives (numbered)
+        ALLERGEN_MAP.put("1", "Farbstoff");
+        ALLERGEN_MAP.put("2", "Konservierungsstoff");
+        ALLERGEN_MAP.put("3", "Antioxidationsmittel");
+        ALLERGEN_MAP.put("4", "Geschmacksverstärker");
+        ALLERGEN_MAP.put("5", "geschwefelt");
+        ALLERGEN_MAP.put("6", "geschwärzt");
+        ALLERGEN_MAP.put("7", "gewachst");
+        ALLERGEN_MAP.put("8", "Phosphat");
+        ALLERGEN_MAP.put("9", "Süßungsmittel");
+        ALLERGEN_MAP.put("10", "enthält eine Phenylalaninquelle");
+        
+        // Main allergen categories (letters)
+        ALLERGEN_MAP.put("A", "Gluten");
+        ALLERGEN_MAP.put("A1", "Weizen");
+        ALLERGEN_MAP.put("A2", "Roggen");
+        ALLERGEN_MAP.put("A3", "Gerste");
+        ALLERGEN_MAP.put("A4", "Hafer");
+        ALLERGEN_MAP.put("A5", "Dinkel");
+        ALLERGEN_MAP.put("B", "Sellerie");
+        ALLERGEN_MAP.put("C", "Krebstiere");
+        ALLERGEN_MAP.put("D", "Eier");
+        ALLERGEN_MAP.put("E", "Fische");
+        ALLERGEN_MAP.put("F", "Erdnüsse");
+        ALLERGEN_MAP.put("G", "Sojabohnen");
+        ALLERGEN_MAP.put("H", "Milch");
+        ALLERGEN_MAP.put("I", "Schalenfrüchte");
+        ALLERGEN_MAP.put("I1", "Mandeln");
+        ALLERGEN_MAP.put("I2", "Haselnüsse");
+        ALLERGEN_MAP.put("I3", "Walnüsse");
+        ALLERGEN_MAP.put("I4", "Kaschunüsse");
+        ALLERGEN_MAP.put("I5", "Pecannüsse");
+        ALLERGEN_MAP.put("I6", "Paranüsse");
+        ALLERGEN_MAP.put("I7", "Pistazien");
+        ALLERGEN_MAP.put("I8", "Macadamianüsse");
+        ALLERGEN_MAP.put("J", "Senf");
+        ALLERGEN_MAP.put("K", "Sesamsamen");
+        ALLERGEN_MAP.put("L", "Schwefeldioxid oder Sulfite");
+        ALLERGEN_MAP.put("M", "Lupinen");
+        ALLERGEN_MAP.put("N", "Weichtiere");
+    }
+
     public static void injectRWTHCanteens(HashMap<Integer, Mensa> canteens) {
         injectCanteen(canteens, 187, "academica");
         injectCanteen(canteens, 96, "vita");
@@ -34,10 +80,11 @@ public class RWTHMensa implements Mensa {
 
     public static void main(String[] args) {
         OpenMensa.getInstance().reloadCanteens();
-        for (Mensa mensa : OpenMensa.getInstance().getAllCanteens()) {
-            if (mensa instanceof RWTHMensa) {
-                System.out.println(mensa.getId());
-                System.out.println(mensa.getName());
+        List<Meal>meals=OpenMensa.getInstance().getMensa(187).getMeals(true);
+        for(Meal meal: meals){
+            System.out.println("\n"+meal.getName()+"\n");
+            for(String s:meal.getNotes()){
+                System.out.println("\""+s+"\"");
             }
         }
     }
@@ -144,72 +191,213 @@ public class RWTHMensa implements Mensa {
 
     public void loadNewMeals() {
         try {
-            loadOpeningHours();// probably not needed but i do not know how often they change them
+            //loadOpeningHours();
             loadMeals();
         } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void loadMeals() throws IOException, ParseException {// todo refractor this method and maybe move to different class
+    private void loadMeals() throws IOException, ParseException {
         String url = "https://www.studierendenwerk-aachen.de/speiseplaene/" + webName + "-w.html";
         Document doc = Jsoup.connect(url).get();
-        Elements days = doc.select("div.default-panel, div.active-panel");
-        Elements dates = doc.select("h3.default-headline, h3.active-headline");
-        String[] dateStrings = new String[dates.size()];
+
+        String[] dateStrings = parseDates(doc);
+        
+        Elements dayPanels = doc.select("div.default-panel, div.active-panel");
+        
+        for (int i = 0; i < dayPanels.size(); i++) {
+            Element dayPanel = dayPanels.get(i);
+            List<Meal> mealsForDay = new ArrayList<>();
+            
+            parseMainMeals(dayPanel, mealsForDay);
+            
+            parseSideDishes(dayPanel, mealsForDay);
+            
+            getCacheManager().cacheMeals(id, dateStrings[i], mealsForDay);
+        }
+    }
+    
+    /**
+     * Extracts and formats the dates from the menu page.
+     */
+    private String[] parseDates(Document doc) throws ParseException {
+        Elements dateHeaders = doc.select("h3.default-headline, h3.active-headline");
+        String[] dateStrings = new String[dateHeaders.size()];
         SimpleDateFormat parser = new SimpleDateFormat("dd.MM.yyyy");
-        for (int i = 0, datesSize = dates.size(); i < datesSize; i++) {
-            Element date = dates.get(i);
-            String dateString = date.child(0).text();
-            dateString = dateString.split(" ")[1];
+        
+        for (int i = 0; i < dateHeaders.size(); i++) {
+            Element dateHeader = dateHeaders.get(i);
+            String dateText = dateHeader.child(0).text();
+            // Extract date from format "Montag, 13.10.2025"
+            String dateString = dateText.split(" ")[1];
             Date dateObject = parser.parse(dateString);
             dateStrings[i] = Util.dateToString(dateObject);
         }
-        for (int i = 0; i < days.size(); i++) {
-            Element day = days.get(i);
-            ArrayList<Meal> meals = new ArrayList<>();
-
-            Element menues = day.selectFirst("table.menues").selectFirst("tbody");
-            Elements mealHTMLs = menues.select("tr");
-            for (Element mealHTML : mealHTMLs) {
-                Set<String> tags = mealHTML.classNames();
-                tags.remove("bg-color");
-                tags.remove("even");
-                tags.remove("odd");// css classes which are always there
-
-                Element menueWrapper = mealHTML.selectFirst("td.menue-wrapper");
-                String category = menueWrapper.selectFirst("span.menue-category").text();
-                Element mealDescription = menueWrapper.selectFirst("span.menue-desc")
-                        .selectFirst("span.expand-nutr");
-
-                String description = mealDescription.ownText();
-
-                // todo extract the allergy stuff from descriptionParts
-                Element mealPrice = menueWrapper.selectFirst("span.menue-price");
-                String price;
-                if (mealPrice == null)
-                    price = "0.0";
-                else price = mealPrice.text().split(" ")[0].replace(",", ".");
-
-                Meal meal = new Meal(description, category, new ArrayList<>(tags),
-                        new Prices(price, null, null, null));
-                meals.add(meal);
+        
+        return dateStrings;
+    }
+    
+    /**
+     * Parses main meals from a day panel.
+     */
+    private void parseMainMeals(Element dayPanel, List<Meal> mealsForDay) {
+        Element menuesTable = dayPanel.selectFirst("table.menues");
+        if (menuesTable == null) {
+            return;
+        }
+        
+        Element tbody = menuesTable.selectFirst("tbody");
+        if (tbody == null) {
+            return;
+        }
+        
+        Elements mealRows = tbody.select("tr");
+        for (Element mealRow : mealRows) {
+            Meal meal = parseMealRow(mealRow);
+            if (meal != null) {
+                mealsForDay.add(meal);
             }
-
-            Element extras = day.selectFirst("table.extras");// parse beilagen
-            Elements beilagen = extras.select("td.menue-wrapper");
-            Prices prices = new Prices(null, null, null, null);
-            for (Element beilage : beilagen) {
-                String category = beilage.selectFirst("span.menue-category").text();
-                for (TextNode beilagenNode : beilage.selectFirst("span.menue-desc").textNodes()) {
-                    String description = beilagenNode.text();
-                    Meal meal = new Meal(description, category, Collections.emptyList(), prices);
-                    meals.add(meal);
+        }
+    }
+    
+    /**
+     * Parses a single meal row from the main meals table.
+     */
+    private Meal parseMealRow(Element mealRow) {
+        // Extract dietary tags from CSS classes (e.g., vegan, OLV, Schwein, etc.)
+        Set<String> dietaryTags = extractDietaryTags(mealRow);
+        
+        Element menueWrapper = mealRow.selectFirst("td.menue-wrapper");
+        if (menueWrapper == null) {
+            return null;
+        }
+        
+        // Extract category (e.g., "Tellergericht", "Vegetarisch", etc.)
+        Element categoryElement = menueWrapper.selectFirst("span.menue-category");
+        String category = categoryElement != null ? categoryElement.text() : "";
+        
+        // Extract description and allergen information
+        Element menueDesc = menueWrapper.selectFirst("span.menue-desc");
+        if (menueDesc == null) {
+            return null;
+        }
+        
+        Element expandNutr = menueDesc.selectFirst("span.expand-nutr");
+        if (expandNutr == null) {
+            return null;
+        }
+        
+        // Get the meal description (text before allergen info)
+        String description = expandNutr.ownText();
+        
+        // Extract allergen information from <sup> tags
+        List<String> allergens = extractAllergens(expandNutr);
+        
+        // Combine dietary tags with allergen information
+        List<String> notes = new ArrayList<>(dietaryTags);
+        notes.addAll(allergens);
+        
+        // Extract price
+        String price = extractPrice(menueWrapper);
+        
+        return new Meal(description, category, notes, new Prices(price, null, null, null));
+    }
+    
+    /**
+     * Extracts dietary tags from CSS classes, filtering out non-dietary classes.
+     */
+    private Set<String> extractDietaryTags(Element mealRow) {
+        Set<String> tags = new HashSet<>(mealRow.classNames());
+        // Remove CSS styling classes that are not dietary information
+        tags.remove("bg-color");
+        tags.remove("even");
+        tags.remove("odd");
+        return tags;
+    }
+    
+    /**
+     * Extracts allergen information from <sup> tags and converts codes to full descriptions.
+     * Example: <sup> A,A1,A3,A5</sup> -> ["Gluten", "Weizen", "Gerste", "Dinkel"]
+     */
+    private List<String> extractAllergens(Element expandNutr) {
+        List<String> allergens = new ArrayList<>();
+        Elements supElements = expandNutr.select("sup");
+        
+        for (Element sup : supElements) {
+            String allergenText = sup.text().trim();
+            if (!allergenText.isEmpty() && !allergenText.equals("Preis ohne Pfand")) {
+                // Split by comma and add each allergen code
+                String[] codes = allergenText.split(",");
+                for (String code : codes) {
+                    String trimmedCode = code.trim();
+                    if (!trimmedCode.isEmpty()) {
+                        // Convert code to full description, fallback to code if not found
+                        String allergenName = ALLERGEN_MAP.getOrDefault(trimmedCode, trimmedCode);
+                        System.out.println(trimmedCode+" "+allergenName);
+                        allergens.add(allergenName);
+                    }
                 }
             }
+        }
+        
+        return allergens;
+    }
+    
+    /**
+     * Extracts price from the menu wrapper element.
+     */
+    private String extractPrice(Element menueWrapper) {
+        Element priceElement = menueWrapper.selectFirst("span.menue-price");
+        if (priceElement == null) {
+            return "0.0";
+        }
+        
+        String priceText = priceElement.text().trim();
+        // Extract price before the € symbol and replace comma with dot
+        String[] parts = priceText.split(" ");
+        if (parts.length > 0) {
+            return parts[0].replace(",", ".");
+        }
+        
+        return "0.0";
+    }
+    
+    /**
+     * Parses side dishes (Beilagen) from a day panel.
+     */
+    private void parseSideDishes(Element dayPanel, List<Meal> mealsForDay) {
+        Element extrasTable = dayPanel.selectFirst("table.extras");
+        if (extrasTable == null) {
+            return;
+        }
+        
+        Elements beilagenWrappers = extrasTable.select("td.menue-wrapper");
+        Prices noPrices = new Prices(null, null, null, null);
+        
+        for (Element wrapper : beilagenWrappers) {
+            Element categoryElement = wrapper.selectFirst("span.menue-category");
+            String category = categoryElement != null ? categoryElement.text() : "Beilage";
             
-            // Cache the loaded meals using the cache manager
-            getCacheManager().cacheMeals(id, dateStrings[i], meals);
+            Element menueDesc = wrapper.selectFirst("span.menue-desc");
+            if (menueDesc == null) {
+                continue;
+            }
+            
+            // Parse each side dish (text nodes separated by "oder")
+            for (TextNode textNode : menueDesc.textNodes()) {
+                String text = textNode.text().trim();
+                // Remove the leading "+" if present
+                text = text.replaceFirst("^\\+\\s*", "").trim();
+                
+                if (!text.isEmpty() && !text.equals("oder")) {
+                    // Extract allergens from sup tags
+                    List<String> allergens = extractAllergens(menueDesc);
+                    
+                    Meal sideDish = new Meal(text, category, allergens, noPrices);
+                    mealsForDay.add(sideDish);
+                }
+            }
         }
     }
 
