@@ -3,6 +3,7 @@ package com.github.codeboy;
 import com.github.codeboy.api.Mensa;
 import com.github.codeboy.api.MensaImpl;
 import com.github.codeboy.api.RWTHMensa;
+import com.github.codeboy.api.ReykjavikMensa;
 import com.github.codeboy.cache.MensaCacheManager;
 import com.google.gson.reflect.TypeToken;
 
@@ -42,6 +43,7 @@ public class OpenMensa {
             }
         } while (!mensas.isEmpty());
         RWTHMensa.injectRWTHCanteens(canteens);
+        injectReykjavikMensa();
     }
 
     private List<Mensa> getCanteens(int page) throws Exception {
@@ -57,6 +59,11 @@ public class OpenMensa {
 
     public void reloadRWTHCanteens() {
         RWTHMensa.injectRWTHCanteens(canteens);
+    }
+
+    public void injectReykjavikMensa() {
+        ReykjavikMensa reykjavikMensa = new ReykjavikMensa();
+        canteens.put(reykjavikMensa.getId(), reykjavikMensa);
     }
 
     public Mensa getMensa(int id) {
