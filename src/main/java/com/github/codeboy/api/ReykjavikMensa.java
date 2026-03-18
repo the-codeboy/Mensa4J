@@ -201,7 +201,7 @@ public class ReykjavikMensa implements Mensa {
     
     @Override
     public String getName() {
-        return "Reykjavik University Cafeteria";
+        return "Reykjavik University Málið";
     }
     
     @Override
