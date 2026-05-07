@@ -22,7 +22,7 @@ public class RWTHMensa implements Mensa {
 
     // Mapping of allergen codes to their full descriptions
     private static final Map<String, String> ALLERGEN_MAP = new HashMap<>();
-    
+
     static {
         // Additives (numbered)
         ALLERGEN_MAP.put("1", "Farbstoff");
@@ -35,7 +35,7 @@ public class RWTHMensa implements Mensa {
         ALLERGEN_MAP.put("8", "Phosphat");
         ALLERGEN_MAP.put("9", "Süßungsmittel");
         ALLERGEN_MAP.put("10", "enthält eine Phenylalaninquelle");
-        
+
         // Main allergen categories (letters)
         ALLERGEN_MAP.put("A", "Gluten");
         ALLERGEN_MAP.put("A1", "Weizen");
@@ -67,24 +67,24 @@ public class RWTHMensa implements Mensa {
     }
 
     public static void injectRWTHCanteens(HashMap<Integer, Mensa> canteens) {
-        injectCanteen(canteens, 187, "academica");
+        injectCanteen(canteens, 187, "academica", "academica", "Aachen, Mensa Academica");
         injectCanteen(canteens, 96, "vita");
         injectCanteen(canteens, 97, "bayernallee");
         injectCanteen(canteens, 95, "ahornstrasse");
         injectCanteen(canteens, 94, "templergraben", "bistro-templergraben");// yes for some reason this has multiple names
         injectCanteen(canteens, 98, "eupenerstrasse", "eupener-strasse");
-        injectCanteen(canteens, 99, "kmac");
+        injectCanteen(canteens, 99, "kmac", "goethestrasse", "KMAC");
         //injectCanteen(canteens, 93, "forum","suedpark");// this getting to complicated. Why do they have a completely different route just for this one???
         injectCanteen(canteens, 100, "juelich");
     }
 
     public static void main(String[] args) {
         OpenMensa.getInstance().reloadCanteens();
-        List<Meal>meals=OpenMensa.getInstance().getMensa(187).getMeals(true);
-        for(Meal meal: meals){
-            System.out.println("\n"+meal.getName()+"\n");
-            for(String s:meal.getNotes()){
-                System.out.println("\""+s+"\"");
+        List<Meal> meals = OpenMensa.getInstance().getMensa(187).getMeals(true);
+        for (Meal meal : meals) {
+            System.out.println("\n" + meal.getName() + "\n");
+            for (String s : meal.getNotes()) {
+                System.out.println("\"" + s + "\"");
             }
         }
     }
@@ -94,25 +94,31 @@ public class RWTHMensa implements Mensa {
     }
 
     private static void injectCanteen(HashMap<Integer, Mensa> canteens, int id, String webName, String otherWebName) {
+        injectCanteen(canteens, id, webName, otherWebName, null);
+    }
+
+    private static void injectCanteen(HashMap<Integer, Mensa> canteens, int id, String webName, String otherWebName, String overwriteName) {
         Mensa original = canteens.get(id);
-        RWTHMensa rwthMensa = new RWTHMensa(original, webName, otherWebName, id);
+        RWTHMensa rwthMensa = new RWTHMensa(original, webName, otherWebName, overwriteName, id);
         canteens.put(id, rwthMensa);// override the original mensa
     }
 
     private final Mensa original;
     private final String webName;
     private final String otherWebname;
+    private final String overwriteName;
     private final int id;
     private final Map<String, OpeningTimes> openingTimesMap = new HashMap<>();
 
-    public RWTHMensa(Mensa original, String webName, String otherWebname, int id) {
+    public RWTHMensa(Mensa original, String webName, String otherWebname, String overwriteName, int id) {
         this.original = original;
         this.webName = webName;
         this.otherWebname = otherWebname;
+        this.overwriteName = overwriteName;
         this.id = id;
     }
 
-    private MensaCacheManager getCacheManager(){
+    private MensaCacheManager getCacheManager() {
         return OpenMensa.getInstance().getCacheManager();
     }
 
@@ -203,21 +209,21 @@ public class RWTHMensa implements Mensa {
         Document doc = Jsoup.connect(url).get();
 
         String[] dateStrings = parseDates(doc);
-        
+
         Elements dayPanels = doc.select("div.default-panel, div.active-panel");
-        
+
         for (int i = 0; i < dayPanels.size(); i++) {
             Element dayPanel = dayPanels.get(i);
             List<Meal> mealsForDay = new ArrayList<>();
-            
+
             parseMainMeals(dayPanel, mealsForDay);
-            
+
             parseSideDishes(dayPanel, mealsForDay);
-            
+
             getCacheManager().cacheMeals(id, dateStrings[i], mealsForDay);
         }
     }
-    
+
     /**
      * Extracts and formats the dates from the menu page.
      */
@@ -225,7 +231,7 @@ public class RWTHMensa implements Mensa {
         Elements dateHeaders = doc.select("h3.default-headline, h3.active-headline");
         String[] dateStrings = new String[dateHeaders.size()];
         SimpleDateFormat parser = new SimpleDateFormat("dd.MM.yyyy");
-        
+
         for (int i = 0; i < dateHeaders.size(); i++) {
             Element dateHeader = dateHeaders.get(i);
             String dateText = dateHeader.child(0).text();
@@ -234,10 +240,10 @@ public class RWTHMensa implements Mensa {
             Date dateObject = parser.parse(dateString);
             dateStrings[i] = Util.dateToString(dateObject);
         }
-        
+
         return dateStrings;
     }
-    
+
     /**
      * Parses main meals from a day panel.
      */
@@ -246,12 +252,12 @@ public class RWTHMensa implements Mensa {
         if (menuesTable == null) {
             return;
         }
-        
+
         Element tbody = menuesTable.selectFirst("tbody");
         if (tbody == null) {
             return;
         }
-        
+
         Elements mealRows = tbody.select("tr");
         for (Element mealRow : mealRows) {
             Meal meal = parseMealRow(mealRow);
@@ -260,50 +266,50 @@ public class RWTHMensa implements Mensa {
             }
         }
     }
-    
+
     /**
      * Parses a single meal row from the main meals table.
      */
     private Meal parseMealRow(Element mealRow) {
         // Extract dietary tags from CSS classes (e.g., vegan, OLV, Schwein, etc.)
         Set<String> dietaryTags = extractDietaryTags(mealRow);
-        
+
         Element menueWrapper = mealRow.selectFirst("td.menue-wrapper");
         if (menueWrapper == null) {
             return null;
         }
-        
+
         // Extract category (e.g., "Tellergericht", "Vegetarisch", etc.)
         Element categoryElement = menueWrapper.selectFirst("span.menue-category");
         String category = categoryElement != null ? categoryElement.text() : "";
-        
+
         // Extract description and allergen information
         Element menueDesc = menueWrapper.selectFirst("span.menue-desc");
         if (menueDesc == null) {
             return null;
         }
-        
+
         Element expandNutr = menueDesc.selectFirst("span.expand-nutr");
         if (expandNutr == null) {
             return null;
         }
-        
+
         // Get the meal description (text before allergen info)
         String description = expandNutr.ownText();
-        
+
         // Extract allergen information from <sup> tags
         List<String> allergens = extractAllergens(expandNutr);
-        
+
         // Combine dietary tags with allergen information
         List<String> notes = new ArrayList<>(dietaryTags);
         notes.addAll(allergens);
-        
+
         // Extract price
         String price = extractPrice(menueWrapper);
-        
+
         return new Meal(description, category, notes, new Prices(price, null, null, null));
     }
-    
+
     /**
      * Extracts dietary tags from CSS classes, filtering out non-dietary classes.
      */
@@ -315,7 +321,7 @@ public class RWTHMensa implements Mensa {
         tags.remove("odd");
         return tags;
     }
-    
+
     /**
      * Extracts allergen information from <sup> tags and converts codes to full descriptions.
      * Example: <sup> A,A1,A3,A5</sup> -> ["Gluten", "Weizen", "Gerste", "Dinkel"]
@@ -323,7 +329,7 @@ public class RWTHMensa implements Mensa {
     private List<String> extractAllergens(Element expandNutr) {
         List<String> allergens = new ArrayList<>();
         Elements supElements = expandNutr.select("sup");
-        
+
         for (Element sup : supElements) {
             String allergenText = sup.text().trim();
             if (!allergenText.isEmpty() && !allergenText.equals("Preis ohne Pfand")) {
@@ -334,16 +340,16 @@ public class RWTHMensa implements Mensa {
                     if (!trimmedCode.isEmpty()) {
                         // Convert code to full description, fallback to code if not found
                         String allergenName = ALLERGEN_MAP.getOrDefault(trimmedCode, trimmedCode);
-                        System.out.println(trimmedCode+" "+allergenName);
+                        System.out.println(trimmedCode + " " + allergenName);
                         allergens.add(allergenName);
                     }
                 }
             }
         }
-        
+
         return allergens;
     }
-    
+
     /**
      * Extracts price from the menu wrapper element.
      */
@@ -352,17 +358,17 @@ public class RWTHMensa implements Mensa {
         if (priceElement == null) {
             return "0.0";
         }
-        
+
         String priceText = priceElement.text().trim();
         // Extract price before the € symbol and replace comma with dot
         String[] parts = priceText.split(" ");
         if (parts.length > 0) {
             return parts[0].replace(",", ".");
         }
-        
+
         return "0.0";
     }
-    
+
     /**
      * Parses side dishes (Beilagen) from a day panel.
      */
@@ -371,29 +377,29 @@ public class RWTHMensa implements Mensa {
         if (extrasTable == null) {
             return;
         }
-        
+
         Elements beilagenWrappers = extrasTable.select("td.menue-wrapper");
         Prices noPrices = new Prices(null, null, null, null);
-        
+
         for (Element wrapper : beilagenWrappers) {
             Element categoryElement = wrapper.selectFirst("span.menue-category");
             String category = categoryElement != null ? categoryElement.text() : "Beilage";
-            
+
             Element menueDesc = wrapper.selectFirst("span.menue-desc");
             if (menueDesc == null) {
                 continue;
             }
-            
+
             // Parse each side dish (text nodes separated by "oder")
             for (TextNode textNode : menueDesc.textNodes()) {
                 String text = textNode.text().trim();
                 // Remove the leading "+" if present
                 text = text.replaceFirst("^\\+\\s*", "").trim();
-                
+
                 if (!text.isEmpty() && !text.equals("oder")) {
                     // Extract allergens from sup tags
                     List<String> allergens = extractAllergens(menueDesc);
-                    
+
                     Meal sideDish = new Meal(text, category, allergens, noPrices);
                     mealsForDay.add(sideDish);
                 }
@@ -461,9 +467,9 @@ public class RWTHMensa implements Mensa {
                 return cachedMeals;
             }
         }
-        
+
         loadNewMeals();
-        
+
         List<Meal> freshMeals = getCacheManager().getCachedMeals(id, date);
         return freshMeals != null ? freshMeals : Collections.emptyList();
     }
@@ -490,7 +496,10 @@ public class RWTHMensa implements Mensa {
 
     @Override
     public String getName() {
-        if (original == null) {
+        if (overwriteName != null) {
+            return overwriteName;
+        }
+        else if (original == null) {
             return webName;
         }
         return original.getName();
@@ -515,7 +524,7 @@ public class RWTHMensa implements Mensa {
     @Override
     public List<Double> getCoordinates() {
         if (original == null) {
-            Double[] d = {0.0,0.0};
+            Double[] d = {0.0, 0.0};
             return Arrays.asList(d);
         }
         return original.getCoordinates();
