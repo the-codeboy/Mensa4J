@@ -73,7 +73,7 @@ public class RWTHMensa implements Mensa {
         injectCanteen(canteens, 95, "ahornstrasse");
         injectCanteen(canteens, 94, "templergraben", "bistro-templergraben");// yes for some reason this has multiple names
         injectCanteen(canteens, 98, "eupenerstrasse", "eupener-strasse");
-        injectCanteen(canteens, 99, "kmac", "goethestrasse", "KMAC");
+        injectCanteen(canteens, 99, "kmac", "goethestrasse", "Aachen, KMAC");
         //injectCanteen(canteens, 93, "forum","suedpark");// this getting to complicated. Why do they have a completely different route just for this one???
         injectCanteen(canteens, 100, "juelich");
     }
